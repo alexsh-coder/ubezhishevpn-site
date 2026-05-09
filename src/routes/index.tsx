@@ -225,7 +225,7 @@ const CountryFlag = ({ code, label }: { code: "fi" | "de" | "nl"; label: string 
 const servers = [
   { code: "fi" as const, name: "Финляндия", desc: "Подходит для стабильного соединения и низкого пинга." },
   { code: "de" as const, name: "Германия", desc: "Оптимальный баланс скорости и надёжности." },
-  { code: "nl" as const, name: "Нидерланды", desc: "Максимальная свобода доступа и обход ограничений." },
+  { code: "us" as const, name: "США", desc: "Максимальная свобода доступа и обход ограничений." },
 ];
 
 const advantages = [
@@ -469,6 +469,7 @@ function Index() {
             { name: "Пробный", desc1: "3 дня доступа", desc2: "с ограничением по трафику", price: "0 ₽" },
             { name: "1 месяц", desc1: "30 дней", desc2: "доступ ко всем серверам", price: "99 ₽", popular: true },
             { name: "3 месяца", desc1: "90 дней", desc2: "доступ ко всем серверам", price: "269 ₽" },
+            { name: "12 месяца", desc1: "365 дней", desc2: "доступ ко всем серверам", price: "899 ₽" },
           ].map((p, i) => (
             <Reveal key={p.name} delay={i * 120}>
               <PriceCard {...p} />

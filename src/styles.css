@@ -279,9 +279,12 @@ h3 {
     background: linear-gradient(180deg, oklch(0.12 0.01 260) 0 33.33%, oklch(49.142% 0.20166 29.223) 33.33% 66.66%, oklch(77.122% 0.14314 87.632) 66.66%);
   }
 
-  .country-flag-nl {
-    background: linear-gradient(180deg, oklch(48.213% 0.19669 27.334) 0 33.33%, oklch(84.133% 0.00114 201.782) 33.33% 66.66%, oklch(45.201% 0.18915 260.568) 66.66%);
-  }  
+  .country-flag-us {
+    background-image: url("/src/assets/us-flag.png");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
 
   .shield-float {
     animation: shield-float 4.8s ease-in-out infinite;
