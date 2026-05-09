@@ -1,6 +1,6 @@
 import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
-
 import appCss from "../styles.css?url";
+import { getMeFn } from "@/api/auth";
 
 function NotFoundComponent() {
   return (
@@ -25,6 +25,14 @@ function NotFoundComponent() {
 }
 
 export const Route = createRootRoute({
+  beforeLoad: async () => {
+    try {
+      const user = await getMeFn()
+      return { user }
+    } catch {
+      return { user: null }
+    }
+  },
   head: () => ({
     meta: [
       { charSet: "utf-8" },
@@ -52,7 +60,7 @@ export const Route = createRootRoute({
 
 function RootShell({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="ru">
       <head>
         <HeadContent />
       </head>

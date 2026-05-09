@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Get-ChildItem -Path \"D:\\\\_Projects\\\\Websites\\\\Ubezhishe\" -Force | Select-Object Name, @{Name='Type';Expression={if\\($_.PSIsContainer\\){'DIR'}else{'FILE'}}} | Format-Table -AutoSize)",
+      "PowerShell(Get-ChildItem -Path \"D:\\\\_Projects\\\\Websites\\\\Ubezhishe\\\\src\\\\routes\" -Recurse | Select-Object -ExpandProperty FullName | Where-Object { $_ -match '\\\\.\\(tsx?|jsx?\\)$' })",
+      "PowerShell(Get-ChildItem \"D:\\\\_Projects\\\\Websites\\\\Ubezhishe\\\\node_modules\" -Name | Where-Object { $_ -match \"vinxi|h3|nitro\" })",
+      "PowerShell(Get-ChildItem \"D:\\\\_Projects\\\\Websites\\\\Ubezhishe\\\\node_modules\\\\@tanstack\" -Name | Where-Object { $_ -match \"start|router\" })"
+    ]
+  }
+}
