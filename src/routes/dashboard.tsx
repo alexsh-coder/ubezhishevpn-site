@@ -577,14 +577,14 @@ function DashboardPage() {
           ) : (
             <p className="text-sm text-muted-foreground flex items-center gap-1.5 mt-1">
               <Bot className="w-3.5 h-3.5" />
-              Для синхронизации с ботом выполните{" "}
+              Для синхронизации с ботом перейдите в профиль в{" "}
               <a
                 href="https://t.me/vpnasylum_bot"
                 target="_blank"
                 rel="noreferrer"
                 className="text-primary hover:underline inline-flex items-center gap-0.5"
               >
-                /link в @vpnasylum_bot
+                @vpnasylum_bot
                 <ExternalLink className="w-3 h-3" />
               </a>
             </p>

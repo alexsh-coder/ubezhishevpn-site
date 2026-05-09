@@ -185,7 +185,7 @@ export const createCardPaymentFn = createServerFn({ method: 'POST' })
   })
 
 export const buyDevicesWithBalanceFn = createServerFn({ method: 'POST' })
-  .inputValidator(z.object({ subId: z.number().int().positive() }))
+  .inputValidator(z.object({ subId: z.coerce.number().int().positive() }))
   .handler(async ({ data }) => {
     const account = await getAccount()
     if (!account?.telegram_user_id) throw new Error('Баланс доступен только для привязанных аккаунтов')
@@ -227,7 +227,7 @@ export const buyDevicesWithBalanceFn = createServerFn({ method: 'POST' })
   })
 
 export const createDevicesCardPaymentFn = createServerFn({ method: 'POST' })
-  .inputValidator(z.object({ subId: z.number().int().positive() }))
+  .inputValidator(z.object({ subId: z.coerce.number().int().positive() }))
   .handler(async ({ data }) => {
     const account = await getAccount()
     if (!account) throw new Error('Не авторизован')
