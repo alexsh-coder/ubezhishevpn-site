@@ -25,7 +25,7 @@ loadEnvLocal('.env.local')
 // Dynamic import so env vars are already set when the server module initialises
 const { default: app } = await import('./dist/server/server.js')
 
-const port = process.env.PORT || 3000
+const port = process.env.PORT || 3002
 const clientDir = './dist/client'
 
 const mimeTypes = {
