@@ -298,7 +298,7 @@ function Index() {
             </span>
           </div>
         
-          <div className="hidden md:flex items-center gap-8 text-sm text-muted-foreground">
+          <div className="flex md:flex items-center gap-3 md:gap-8 text-sm text-muted-foreground">
             {/* <span>Приватность</span>
             <span className="w-1 h-1 rounded-full bg-primary" /> */}
               <Link
@@ -469,7 +469,7 @@ function Index() {
             { name: "Пробный", desc1: "3 дня доступа", desc2: "с ограничением по трафику", price: "0 ₽" },
             { name: "1 месяц", desc1: "30 дней", desc2: "доступ ко всем серверам", price: "99 ₽", popular: true },
             { name: "3 месяца", desc1: "90 дней", desc2: "доступ ко всем серверам", price: "269 ₽" },
-            { name: "12 месяца", desc1: "365 дней", desc2: "доступ ко всем серверам", price: "899 ₽" },
+            // { name: "12 месяца", desc1: "365 дней", desc2: "доступ ко всем серверам", price: "899 ₽" },
           ].map((p, i) => (
             <Reveal key={p.name} delay={i * 120}>
               <PriceCard {...p} />

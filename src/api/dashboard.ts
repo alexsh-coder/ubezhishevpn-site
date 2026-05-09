@@ -43,63 +43,42 @@ export const getDashboardDataFn = createServerFn({ method: 'GET' }).handler(asyn
   const account = await getAuthenticatedAccount()
   if (!account) throw new Error('Не авторизован')
 
-  let subscriptions: Subscription[] = []
-  let balance = 0
+  const webUserId = String(account.id)
+  const userIds = account.telegram_user_id
+    ? [account.telegram_user_id, webUserId]
+    : [webUserId]
 
-  if (account.telegram_user_id) {
-    const [subsResult, balanceResult] = await Promise.all([
-      pool.query(
-        `SELECT id, user_id, username, remna_uuid, sub_url, created_at, expires_at, tariff, devices, remna_username
-         FROM subscriptions WHERE user_id = $1 ORDER BY created_at DESC`,
-        [account.telegram_user_id]
-      ),
-      pool.query('SELECT balance FROM users WHERE user_id = $1', [account.telegram_user_id]),
-    ])
-    subscriptions = subsResult.rows as Subscription[]
-    balance = balanceResult.rows[0]?.balance ?? 0
-  }
+  const [subsResult, balanceResult] = await Promise.all([
+    pool.query(
+      `SELECT id, user_id, username, remna_uuid, sub_url, created_at, expires_at, tariff, devices, remna_username
+       FROM subscriptions WHERE user_id = ANY($1) ORDER BY created_at DESC`,
+      [userIds]
+    ),
+    account.telegram_user_id
+      ? pool.query('SELECT balance FROM users WHERE user_id = $1', [account.telegram_user_id])
+      : Promise.resolve({ rows: [] }),
+  ])
+
+  const subscriptions = subsResult.rows as Subscription[]
+  const balance = balanceResult.rows[0]?.balance ?? 0
 
   return { account, subscriptions, balance }
 })
-
-export const linkTelegramFn = createServerFn({ method: 'POST' })
-  .inputValidator(z.object({ telegramId: z.string().regex(/^\d+$/, 'Введите числовой ID') }))
-  .handler(async ({ data }) => {
-    const account = await getAuthenticatedAccount()
-    if (!account) throw new Error('Не авторизован')
-
-    const userCheck = await pool.query('SELECT user_id FROM users WHERE user_id = $1', [
-      data.telegramId,
-    ])
-    if (userCheck.rows.length === 0) {
-      throw new Error('Пользователь с таким Telegram ID не найден в боте')
-    }
-
-    const existing = await pool.query(
-      'SELECT id FROM web_accounts WHERE telegram_user_id = $1 AND id != $2',
-      [data.telegramId, account.id]
-    )
-    if (existing.rows.length > 0) {
-      throw new Error('Этот Telegram аккаунт уже привязан к другому аккаунту')
-    }
-
-    await pool.query('UPDATE web_accounts SET telegram_user_id = $1 WHERE id = $2', [
-      data.telegramId,
-      account.id,
-    ])
-
-    return { ok: true }
-  })
 
 export const getDevicesFn = createServerFn({ method: 'GET' })
   .inputValidator(z.object({ remnaUuid: z.string().min(1) }))
   .handler(async ({ data }) => {
     const account = await getAuthenticatedAccount()
-    if (!account?.telegram_user_id) throw new Error('Не авторизован')
+    if (!account) throw new Error('Не авторизован')
+
+    const webUserId = String(account.id)
+    const userIds = account.telegram_user_id
+      ? [account.telegram_user_id, webUserId]
+      : [webUserId]
 
     const check = await pool.query(
-      'SELECT id FROM subscriptions WHERE remna_uuid = $1 AND user_id = $2',
-      [data.remnaUuid, account.telegram_user_id]
+      'SELECT id FROM subscriptions WHERE remna_uuid = $1 AND user_id = ANY($2)',
+      [data.remnaUuid, userIds]
     )
     if (check.rows.length === 0) throw new Error('Нет доступа')
 
@@ -114,11 +93,16 @@ export const deleteDeviceFn = createServerFn({ method: 'POST' })
   .inputValidator(z.object({ remnaUuid: z.string().min(1), hwid: z.string().min(1) }))
   .handler(async ({ data }) => {
     const account = await getAuthenticatedAccount()
-    if (!account?.telegram_user_id) throw new Error('Не авторизован')
+    if (!account) throw new Error('Не авторизован')
+
+    const webUserId = String(account.id)
+    const userIds = account.telegram_user_id
+      ? [account.telegram_user_id, webUserId]
+      : [webUserId]
 
     const check = await pool.query(
-      'SELECT id FROM subscriptions WHERE remna_uuid = $1 AND user_id = $2',
-      [data.remnaUuid, account.telegram_user_id]
+      'SELECT id FROM subscriptions WHERE remna_uuid = $1 AND user_id = ANY($2)',
+      [data.remnaUuid, userIds]
     )
     if (check.rows.length === 0) throw new Error('Нет доступа')
 

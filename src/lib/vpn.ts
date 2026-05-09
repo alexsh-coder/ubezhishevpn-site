@@ -40,14 +40,16 @@ export type IssueResult = {
 }
 
 export async function issueOrExtend(
-  telegramId: string,
+  userId: string,
   days: number,
-  tariff: string
+  tariff: string,
+  telegramId: string | null = null
 ): Promise<IssueResult> {
   const now = new Date()
+
   const subsRes = await pool.query<SubRow>(
     'SELECT * FROM subscriptions WHERE user_id = $1 ORDER BY id DESC LIMIT 20',
-    [telegramId]
+    [userId]
   )
   const activeSub = subsRes.rows.find((r) => {
     try { return parseDbDate(r.expires_at) > now } catch { return false }
@@ -73,13 +75,16 @@ export async function issueOrExtend(
 
   const remnaUsername = makeRemnaUsername()
   const devices = activeSub?.devices ?? DEVICES_DEFAULT
-  const userRes = await pool.query<{ username: string }>('SELECT username FROM users WHERE user_id = $1', [telegramId])
-  const tgUsername = userRes.rows[0]?.username ?? ''
+  let tgUsername = ''
+  if (telegramId) {
+    const userRes = await pool.query<{ username: string }>('SELECT username FROM users WHERE user_id = $1', [telegramId])
+    tgUsername = userRes.rows[0]?.username ?? ''
+  }
 
   const created = await remna.createUser({
     username: remnaUsername,
     expireAt: newExp,
-    description: `Web tg=${telegramId} tariff=${tariff}`,
+    description: `Web user=${userId} tariff=${tariff}`,
     deviceLimit: devices,
     telegramId,
   })
@@ -92,7 +97,7 @@ export async function issueOrExtend(
     `INSERT INTO subscriptions (user_id, username, remna_uuid, sub_id, sub_url, created_at, expires_at, tariff, devices, remna_username)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`,
     [
-      telegramId,
+      userId,
       tgUsername,
       created.uuid,
       created.shortUuid ?? created.uuid.substring(0, 8),

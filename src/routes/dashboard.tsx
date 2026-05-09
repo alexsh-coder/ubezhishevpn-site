@@ -3,11 +3,11 @@ import { useState } from "react";
 import {
   LogOut, User, Send, Copy, Check, ExternalLink, Wallet,
   Smartphone, Trash2, ChevronDown, ChevronUp, CreditCard,
-  ShieldCheck, MessageCircle, Plus,
+  ShieldCheck, MessageCircle, Plus, Bot,
 } from "lucide-react";
 import { logoutFn } from "@/api/auth";
 import {
-  getDashboardDataFn, linkTelegramFn, getDevicesFn, deleteDeviceFn,
+  getDashboardDataFn, getDevicesFn, deleteDeviceFn,
   type Subscription, type Device,
 } from "@/api/dashboard";
 import {
@@ -523,82 +523,6 @@ function BuySection({
   return null;
 }
 
-// ── Link Telegram card ─────────────────────────────────────────────────────
-
-function LinkTelegramCard({ onLinked }: { onLinked: () => Promise<void> }) {
-  const [telegramId, setTelegramId] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  async function handleLink(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
-    try {
-      await linkTelegramFn({ data: { telegramId } });
-      await onLinked();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Ошибка привязки");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  return (
-    <div className="rounded-xl border bg-card p-5 space-y-4">
-      <div className="flex items-center gap-2">
-        <Send className="w-5 h-5 text-[var(--telegram,#2AABEE)]" />
-        <h2 className="font-semibold">Привязать Telegram аккаунт</h2>
-      </div>
-
-      <p className="text-sm text-muted-foreground">
-        Привяжите ваш Telegram, чтобы видеть подписки из бота{" "}
-        <a
-          href="https://t.me/vpnasylum_bot"
-          target="_blank"
-          rel="noreferrer"
-          className="text-primary hover:underline inline-flex items-center gap-0.5"
-        >
-          @vpnasylum_bot
-          <ExternalLink className="w-3 h-3" />
-        </a>
-        .
-      </p>
-
-      <div className="text-sm text-muted-foreground bg-surface rounded-lg p-3 space-y-1">
-        <p className="font-medium text-foreground">Как узнать свой Telegram ID:</p>
-        <p>1. Откройте Telegram и напишите боту <span className="font-mono">@userinfobot</span></p>
-        <p>2. Отправьте любое сообщение</p>
-        <p>3. Скопируйте число из поля «Id»</p>
-      </div>
-
-      <form onSubmit={handleLink} className="flex gap-2">
-        <input
-          type="text"
-          inputMode="numeric"
-          pattern="\d+"
-          placeholder="123456789"
-          value={telegramId}
-          onChange={(e) => setTelegramId(e.target.value.replace(/\D/g, ""))}
-          className="flex-1 border rounded-lg px-3 py-2 bg-surface text-sm outline-none focus:ring-2 focus:ring-primary/50"
-          required
-        />
-        <button
-          type="submit"
-          disabled={loading || !telegramId}
-          className="px-4 py-2 rounded-xl font-semibold text-white vpn-primary-button text-sm transition-all hover:brightness-110 disabled:opacity-60 disabled:pointer-events-none"
-        >
-          {loading ? "..." : "Привязать"}
-        </button>
-      </form>
-
-      {error && (
-        <p className="text-sm text-destructive bg-destructive/10 rounded-lg px-3 py-2">{error}</p>
-      )}
-    </div>
-  );
-}
-
 // ── Dashboard page ─────────────────────────────────────────────────────────
 
 function DashboardPage() {
@@ -611,10 +535,6 @@ function DashboardPage() {
   async function handleLogout() {
     await logoutFn();
     await navigate({ to: "/" });
-  }
-
-  async function handleLinked() {
-    await router.invalidate();
   }
 
   async function handlePurchased() {
@@ -649,15 +569,29 @@ function DashboardPage() {
           </div>
           <p className="font-semibold text-lg">{account.name ?? account.email}</p>
           {account.name && <p className="text-sm text-muted-foreground">{account.email}</p>}
-          {account.telegram_user_id && (
+          {account.telegram_user_id ? (
             <p className="text-sm text-muted-foreground flex items-center gap-1.5 mt-1">
               <Send className="w-3.5 h-3.5" />
               Telegram привязан (ID: {account.telegram_user_id})
             </p>
+          ) : (
+            <p className="text-sm text-muted-foreground flex items-center gap-1.5 mt-1">
+              <Bot className="w-3.5 h-3.5" />
+              Для синхронизации с ботом выполните{" "}
+              <a
+                href="https://t.me/vpnasylum_bot"
+                target="_blank"
+                rel="noreferrer"
+                className="text-primary hover:underline inline-flex items-center gap-0.5"
+              >
+                /link в @vpnasylum_bot
+                <ExternalLink className="w-3 h-3" />
+              </a>
+            </p>
           )}
         </div>
 
-        {/* Balance */}
+        {/* Balance — only shown when Telegram is linked */}
         {account.telegram_user_id && (
           <div className="rounded-xl border bg-card p-5 flex items-center gap-3">
             <Wallet className="w-5 h-5 text-primary" />
@@ -668,62 +602,55 @@ function DashboardPage() {
           </div>
         )}
 
-        {/* Main content */}
-        {!account.telegram_user_id ? (
-          <LinkTelegramCard onLinked={handleLinked} />
-        ) : (
-          <>
-            {/* Subscriptions */}
-            {subscriptions.length > 0 && (
-              <div className="space-y-3">
-                <h2 className="font-semibold">Подписки</h2>
-                {subscriptions.map((sub) => (
-                  <SubCard key={sub.id} sub={sub} onChanged={handlePurchased} />
-                ))}
-              </div>
-            )}
-
-            {/* Buy section */}
-            <BuySection
-              balance={Number(balance)}
-              hasActiveSub={hasActiveSub}
-              onPurchased={handlePurchased}
-            />
-
-            {/* No subs hint */}
-            {subscriptions.length === 0 && (
-              <p className="text-sm text-muted-foreground text-center">
-                Нет подписок. Используйте кнопку выше или оформите в{" "}
-                <a
-                  href="https://t.me/vpnasylum_bot"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-primary hover:underline"
-                >
-                  @vpnasylum_bot
-                </a>
-                .
-              </p>
-            )}
-
-            {/* Support */}
-            <div className="rounded-xl border bg-card p-4 flex items-center justify-between">
-              <div className="flex items-center gap-2 text-sm">
-                <MessageCircle className="w-4 h-4 text-primary" />
-                <span>Вопросы? Мы поможем</span>
-              </div>
-              <a
-                href={SUPPORT_URL}
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
-              >
-                Написать
-                <ExternalLink className="w-3 h-3" />
-              </a>
-            </div>
-          </>
+        {/* Subscriptions */}
+        {subscriptions.length > 0 && (
+          <div className="space-y-3">
+            <h2 className="font-semibold">Подписки</h2>
+            {subscriptions.map((sub) => (
+              <SubCard key={sub.id} sub={sub} onChanged={handlePurchased} />
+            ))}
+          </div>
         )}
+
+        {/* Buy section */}
+        <BuySection
+          balance={Number(balance)}
+          hasActiveSub={hasActiveSub}
+          onPurchased={handlePurchased}
+        />
+
+        {/* No subs hint */}
+        {subscriptions.length === 0 && (
+          <p className="text-sm text-muted-foreground text-center">
+            Нет активных подписок. Купите выше или оформите через{" "}
+            <a
+              href="https://t.me/vpnasylum_bot"
+              target="_blank"
+              rel="noreferrer"
+              className="text-primary hover:underline"
+            >
+              @vpnasylum_bot
+            </a>
+            .
+          </p>
+        )}
+
+        {/* Support */}
+        <div className="rounded-xl border bg-card p-4 flex items-center justify-between">
+          <div className="flex items-center gap-2 text-sm">
+            <MessageCircle className="w-4 h-4 text-primary" />
+            <span>Вопросы? Мы поможем</span>
+          </div>
+          <a
+            href={SUPPORT_URL}
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+          >
+            Написать
+            <ExternalLink className="w-3 h-3" />
+          </a>
+        </div>
       </div>
     </div>
   );
