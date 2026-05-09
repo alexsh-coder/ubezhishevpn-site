@@ -30,13 +30,13 @@ Uses **Bun** as the package manager (see `bunfig.toml`). Do not use npm/yarn.
 
 ## Database (Reference)
 
-`db.py` is a **read-only reference** — it belongs to the Telegram bot project and is copied here for schema documentation. It is not executed by this site.
+The bot code lives in `telegram_bot/`. Its `db.py` documents the shared PostgreSQL schema.
 
-PostgreSQL schema (9 tables): `users`, `subscriptions`, `payments`, `promocodes`, `promo_uses`, `referral_bonuses`, `balance_tx`, `settings`, `reminder_sent`.
-
-Connection env vars (for any future backend): `PG_HOST`, `PG_PORT`, `PG_USER`, `PG_PASSWORD`, `PG_DBNAME`.
+PostgreSQL schema (9 shared tables): `users`, `subscriptions`, `payments`, `promocodes`, `promo_uses`, `referral_bonuses`, `balance_tx`, `settings`, `reminder_sent`. Plus `web_accounts` (web-only).
 
 The site must reuse this exact schema — no migrations that would break the bot.
+
+Key fields: `subscriptions.remna_uuid` (Remnawave user UUID), `subscriptions.remna_username` (display name), `subscriptions.expires_at` stored as TEXT in `"YYYY-MM-DD HH:MM"` UTC format (bot convention — preserve this format).
 
 ## Authentication
 
@@ -44,17 +44,25 @@ Web auth is implemented in `src/api/auth.ts` using TanStack Start server functio
 
 - **Server functions:** `registerFn`, `loginFn`, `logoutFn`, `getMeFn` — import from `@tanstack/react-start/server` for `getCookie`/`setCookie`/`deleteCookie`
 - **Utilities:** `src/lib/auth.ts` (bcryptjs + jose), `src/lib/db.ts` (pg Pool singleton)
-- **Dashboard data:** `src/api/dashboard.ts` — `getDashboardDataFn` fetches subscriptions/balance via linked `telegram_user_id`; `linkTelegramFn` links a Telegram user ID to the web account
 - **Auth context:** Root route's `beforeLoad` calls `getMeFn()` and returns `{ user }` — available in all child routes via `context.user`
 - **Migration:** `src/db/migrate.ts` — run once with `npx tsx src/db/migrate.ts` (table already created)
-- **Env:** `.env.local` (gitignored) holds DB credentials and `JWT_SECRET`
+- **Env:** `.env.local` (gitignored) holds DB creds, `JWT_SECRET`, Remnawave creds, YooKassa creds, `APP_URL`, `SUPPORT_URL`
 
 The `createServerFn` API uses `.inputValidator(zodSchema)` (not `.validator()`).
 
+## Remnawave & Payments
+
+- **`src/lib/remnawave.ts`** — fetch-based Remnawave VPN API client (get/create users, get/delete devices)
+- **`src/lib/yookassa.ts`** — YooKassa payment creation
+- **`src/lib/vpn.ts`** — `issueOrExtend(telegramId, days, tariff)` mirrors bot's subscription logic; `addDevicesForSub(subId, telegramId)`
+- **`src/api/dashboard.ts`** — dashboard data + `getDevicesFn` + `deleteDeviceFn`
+- **`src/api/payment.ts`** — `getTariffsFn`, `activateTrialFn`, `buyWithBalanceFn`, `createCardPaymentFn`, `buyDevicesWithBalanceFn`, `createDevicesCardPaymentFn`
+
+**Card payment flow:** web app creates a record in `payments` table → creates YooKassa payment → redirects user → YooKassa sends webhook to the bot's Python webhook server → bot activates subscription → user returns to dashboard and refreshes. The YooKassa webhook URL must point to the bot's server (port 8081 or proxied). `APP_URL` env var sets the return URL after payment.
+
 ## What's Not Yet Built
 
-- Payment flow integration (Yookassa)
-- Telegram link verification (currently self-reported ID; proper flow requires bot `/link <code>` command)
+- Telegram link verification (currently self-reported ID; proper flow: bot `/link <code>` command)
 
 When adding server-side logic, use `createServerFn` from `@tanstack/react-start`.
 
