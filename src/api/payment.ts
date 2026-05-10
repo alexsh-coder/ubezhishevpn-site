@@ -10,7 +10,7 @@ import type { WebAccount } from '@/api/auth'
 const COOKIE = 'auth_token'
 
 const TARIFFS = {
-  trial: { days: 3, priceRub: 0, label: 'Пробный · 3 дня · Бесплатно' },
+  // trial: { days: 3, priceRub: 0, label: 'Пробный · 3 дня · Бесплатно' },
   m1: { days: 30, priceRub: 99, label: '1 месяц · 99 ₽' },
   m3: { days: 90, priceRub: 269, label: '3 месяца · 269 ₽' },
   m12: { days: 365, priceRub: 899, label: '12 месяцев · 899 ₽' },

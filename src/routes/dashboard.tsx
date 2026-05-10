@@ -596,7 +596,7 @@ function DashboardPage() {
           <div className="rounded-xl border bg-card p-5 flex items-center gap-3">
             <Wallet className="w-5 h-5 text-primary" />
             <div>
-              <p className="text-sm text-muted-foreground">Баланс</p>
+              <p className="text-sm text-muted-foreground">Реферальный баланс</p>
               <p className="font-semibold text-lg">{Number(balance).toFixed(2)} ₽</p>
             </div>
           </div>

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-VPN subscription sales website for **УбежищеVPN** (Asylum VPN). Shares a PostgreSQL database with a Telegram bot (`vpnasylum_bot`). Currently implements a landing page and auth UI; backend API integration is the main pending work.
+VPN subscription sales website for **УбежищеVPN** (Asylum VPN). Shares a PostgreSQL database with a Telegram bot (`vpnasylum_bot`). The site is fully implemented: landing page, auth, dashboard, subscription purchase, device management, and payment flows are all working.
 
 ## Commands
 
@@ -28,6 +28,8 @@ Uses **Bun** as the package manager (see `bunfig.toml`). Do not use npm/yarn.
 
 **Scroll animations:** `src/hooks/useReveal.tsx` — IntersectionObserver hook returning `{ ref, visible }`. Used on landing page for staggered reveal animations.
 
+**Landing page assets:** country flag SVGs (`de-flag.svg`, `fi-flag.svg`) and PNG (`us-flag.png`) live in `src/assets/`.
+
 ## Database (Reference)
 
 The bot code lives in `telegram_bot/`. Its `db.py` documents the shared PostgreSQL schema.
@@ -37,6 +39,8 @@ PostgreSQL schema (9 shared tables): `users`, `subscriptions`, `payments`, `prom
 The site must reuse this exact schema — no migrations that would break the bot.
 
 Key fields: `subscriptions.remna_uuid` (Remnawave user UUID), `subscriptions.remna_username` (display name), `subscriptions.expires_at` stored as TEXT in `"YYYY-MM-DD HH:MM"` UTC format (bot convention — preserve this format).
+
+**Note:** PostgreSQL's `pg` driver returns `bigint`/`bigserial` columns as strings, not numbers. Use `z.coerce.number()` (not `z.number()`) when validating numeric IDs that come from the DB through server functions (e.g. `subId`).
 
 ## Authentication
 
@@ -50,15 +54,19 @@ Web auth is implemented in `src/api/auth.ts` using TanStack Start server functio
 
 The `createServerFn` API uses `.inputValidator(zodSchema)` (not `.validator()`).
 
+**Telegram link is optional.** Users can register and use the site without linking a Telegram account. Features that require Telegram: balance display, balance-based payments, trial-used tracking from bot history. Card payments and device management work without Telegram. The `telegram_user_id` field on `web_accounts` is nullable throughout.
+
 ## Remnawave & Payments
 
 - **`src/lib/remnawave.ts`** — fetch-based Remnawave VPN API client (get/create users, get/delete devices)
 - **`src/lib/yookassa.ts`** — YooKassa payment creation
-- **`src/lib/vpn.ts`** — `issueOrExtend(telegramId, days, tariff)` mirrors bot's subscription logic; `addDevicesForSub(subId, telegramId)`
+- **`src/lib/vpn.ts`** — `issueOrExtend(userId, days, tariff, telegramId?)` mirrors bot's subscription logic; `addDevicesForSub(subId, telegramId)` adds +2 devices to a subscription
 - **`src/api/dashboard.ts`** — dashboard data + `getDevicesFn` + `deleteDeviceFn`
 - **`src/api/payment.ts`** — `getTariffsFn`, `activateTrialFn`, `buyWithBalanceFn`, `createCardPaymentFn`, `buyDevicesWithBalanceFn`, `createDevicesCardPaymentFn`
 
 **Card payment flow:** web app creates a record in `payments` table → creates YooKassa payment → redirects user → YooKassa sends webhook to the bot's Python webhook server → bot activates subscription → user returns to dashboard and refreshes. The YooKassa webhook URL must point to the bot's server (port 8081 or proxied). `APP_URL` env var sets the return URL after payment.
+
+**Device purchase:** costs 50 ₽, adds +2 to `subscriptions.devices` and syncs with Remnawave. Balance payment requires linked Telegram (`buyDevicesWithBalanceFn`). Card payment (`createDevicesCardPaymentFn`) works for all users — bot handles device increment via webhook after payment.
 
 ## What's Not Yet Built
 

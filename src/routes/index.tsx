@@ -466,10 +466,10 @@ function Index() {
       <Section title="Тарифы">
         <div className="grid md:grid-cols-3 gap-5">
           {[
-            { name: "Пробный", desc1: "3 дня доступа", desc2: "с ограничением по трафику", price: "0 ₽" },
-            { name: "1 месяц", desc1: "30 дней", desc2: "доступ ко всем серверам", price: "99 ₽", popular: true },
-            { name: "3 месяца", desc1: "90 дней", desc2: "доступ ко всем серверам", price: "269 ₽" },
-            // { name: "12 месяца", desc1: "365 дней", desc2: "доступ ко всем серверам", price: "899 ₽" },
+            // { name: "Пробный", desc1: "3 дня доступа", desc2: "с ограничением по трафику", price: "0 ₽" },
+            { name: "1 месяц", desc1: "30 дней", desc2: "доступ ко всем серверам", price: "99 ₽" },
+            { name: "🔥 3 месяца", desc1: "90 дней", desc2: "доступ ко всем серверам", price: "269 ₽", profitable: true, discount: "(-10%)" },
+            { name: "12 месяца", desc1: "365 дней", desc2: "доступ ко всем серверам", price: "899 ₽", discount: "(-25%)" },
           ].map((p, i) => (
             <Reveal key={p.name} delay={i * 120}>
               <PriceCard {...p} />
@@ -573,35 +573,45 @@ function Section({ title, children, bare }: { title?: string; children: React.Re
   );
 }
 
-function PriceCard({ name, desc1, desc2, price, popular }: {
-  name: string; desc1: string; desc2: string; price: string; popular?: boolean;
+function PriceCard({ name, desc1, desc2, price, profitable, discount }: {
+  name: string; desc1: string; desc2: string; price: string; profitable?: boolean;
 }) {
   return (
     <div
       className="relative rounded-2xl border p-6 flex flex-col items-center text-center"
       style={{
-        background: popular ? "var(--surface-elevated)" : "var(--surface)",
-        borderColor: popular ? "oklch(0.62 0.22 280 / 0.6)" : undefined,
-        boxShadow: popular ? "var(--shadow-elevated)" : "var(--shadow-card)",
+        background: profitable ? "var(--surface-elevated)" : "var(--surface)",
+        borderColor: profitable ? "oklch(0.62 0.22 280 / 0.6)" : undefined,
+        boxShadow: profitable ? "var(--shadow-elevated)" : "var(--shadow-card)",
       }}
     >
-      {popular && (
+      {profitable && (
         <div
           className="absolute -top-3 px-4 py-1 rounded-full text-xs font-semibold text-primary-foreground tracking-wider"
           style={{ background: "var(--gradient-primary)" }}
         >
-          ПОПУЛЯРНЫЙ
+          ВЫГОДНО
         </div>
       )}
       <h3 className="font-semibold text-lg mt-2">{name}</h3>
       <p className="mt-3 text-sm text-muted-foreground">{desc1}</p>
       <p className="text-sm text-muted-foreground">{desc2}</p>
-      <div className="my-5 text-3xl font-bold">{price}</div>
+      <div className="my-5 relative text-center">
+        <span className="text-3xl font-bold">
+          {price}
+        </span>
+
+        {discount && (
+          <span className="absolute translate-y-4 ml-2 text-sm font-normal opacity-70">
+            {discount}
+          </span>
+        )}
+      </div>
       <a
         href={TG_URL}
         className="w-full px-4 py-3 rounded-xl text-sm font-semibold transition hover:-translate-y-0.5 "
         style={
-          popular
+          profitable
             ? { background: "var(--gradient-cta)", color: "var(--primary-foreground)" }
             : { background: "var(--surface-elevated)", color: "var(--foreground)", border: "1px solid var(--border)" }
         }
