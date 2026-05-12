@@ -592,15 +592,6 @@ function DashboardPage() {
         </div>
 
         {/* Balance — only shown when Telegram is linked */}
-        {account.telegram_user_id && (
-          <div className="rounded-xl border bg-card p-5 flex items-center gap-3">
-            <Wallet className="w-5 h-5 text-primary" />
-            <div>
-              <p className="text-sm text-muted-foreground">Реферальный баланс</p>
-              <p className="font-semibold text-lg">{Number(balance).toFixed(2)} ₽</p>
-            </div>
-          </div>
-        )}
 
         {/* Subscriptions */}
         {subscriptions.length > 0 && (
@@ -634,6 +625,26 @@ function DashboardPage() {
             .
           </p>
         )}
+
+        {/* {account.telegram_user_id && (
+          <div className="rounded-xl border bg-card p-5 flex items-center gap-3">
+            <Wallet className="w-5 h-5 text-primary" />
+            <div>
+              <p className="text-sm text-muted-foreground">Вы заработали:</p>
+              <p className="font-semibold text-lg">{Number(balance).toFixed(2)} ₽</p>
+              <p className="text-xs text-muted-foreground">Рекомендуйте наш VPN по вашей реферальной ссылке и получайте процент! 
+                Пока доступно только в боте <a
+                href="https://t.me/vpnasylum_bot"
+                target="_blank"
+                rel="noreferrer"
+                className="text-primary hover:underline">
+                  
+                @vpnasylum_bot
+              </a>  
+              </p>
+            </div>
+          </div>
+        )} */}
 
         {/* Support */}
         <div className="rounded-xl border bg-card p-4 flex items-center justify-between">
