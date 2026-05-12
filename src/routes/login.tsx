@@ -68,9 +68,17 @@ function LoginPage() {
           </div>
 
           {error && (
-            <p className="text-sm text-destructive bg-destructive/10 rounded-lg px-3 py-2">
-              {error}
-            </p>
+            <div className="text-sm text-destructive bg-destructive/10 rounded-lg px-3 py-2 space-y-1">
+              <p>{error}</p>
+              {error === "Неверный email или пароль" && (
+                <Link
+                  to="/forgot-password"
+                  className="inline-block text-destructive underline underline-offset-2 hover:opacity-80"
+                >
+                  Забыли пароль?
+                </Link>
+              )}
+            </div>
           )}
 
           <button
