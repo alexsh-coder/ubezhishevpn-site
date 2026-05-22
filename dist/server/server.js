@@ -88,7 +88,7 @@ function getResponse() {
 }
 var HEADERS = { TSS_SHELL: "X-TSS_SHELL" };
 async function getStartManifest(matchedRoutes) {
-  const { tsrStartManifest } = await import("./assets/_tanstack-start-manifest_v-Bat27s3M.js");
+  const { tsrStartManifest } = await import("./assets/_tanstack-start-manifest_v-D_sNy3xZ.js");
   const startManifest = tsrStartManifest();
   const rootRoute = startManifest.routes[rootRouteId] = startManifest.routes[rootRouteId] || {};
   rootRoute.assets = rootRoute.assets || [];
@@ -118,19 +118,23 @@ async function getStartManifest(matchedRoutes) {
 const manifest = {
   "01de0cac8f889cb4d5afad5c26402c1af217daf297b3c7e844cfae2f78cfabf3": {
     functionName: "getTariffsFn_createServerFn_handler",
-    importer: () => import("./assets/payment-DRs0tY8w.js")
+    importer: () => import("./assets/payment-L1lzEXGG.js")
   },
   "106d2db918fd7a0e558d1ee9877ca8987d3cd98bd97ed55dcb71e0108b079c4b": {
     functionName: "createDevicesCardPaymentFn_createServerFn_handler",
-    importer: () => import("./assets/payment-DRs0tY8w.js")
+    importer: () => import("./assets/payment-L1lzEXGG.js")
+  },
+  "16a8ddf6bd9d4b86f04024b511f2a74f467262c057a73ea6065c5d63b321a141": {
+    functionName: "getGoogleAuthUrlFn_createServerFn_handler",
+    importer: () => import("./assets/oauth-CPOmjzwt.js")
   },
   "2d4912260aae0e2821f9a0473278079ece7a3b1f4bd3577caa311c66b869ea75": {
     functionName: "activateTrialFn_createServerFn_handler",
-    importer: () => import("./assets/payment-DRs0tY8w.js")
+    importer: () => import("./assets/payment-L1lzEXGG.js")
   },
   "5533b32c62497a68b9e7a9956a9b748467e061155655107d1c37442a373ee747": {
     functionName: "getDevicesFn_createServerFn_handler",
-    importer: () => import("./assets/dashboard-lN9MEgK3.js")
+    importer: () => import("./assets/dashboard-BeapJXpG.js")
   },
   "5923ee146a09dcd3d79b2b93d8c4cafcaf21d0d69a6a64ef3ce96510fd0d0c36": {
     functionName: "logoutFn_createServerFn_handler",
@@ -138,27 +142,23 @@ const manifest = {
   },
   "5d3a6d8575218593933fd24bcfb68bcd6c1e482b609add67819d0e855cc5018b": {
     functionName: "getDashboardDataFn_createServerFn_handler",
-    importer: () => import("./assets/dashboard-lN9MEgK3.js")
+    importer: () => import("./assets/dashboard-BeapJXpG.js")
   },
   "7d560aef9e5947215ae66ac310a915d04cb56938536dc3b73e7a8fa0eee4296b": {
     functionName: "buyWithBalanceFn_createServerFn_handler",
-    importer: () => import("./assets/payment-DRs0tY8w.js")
-  },
-  "a01ca2150fb3a7110a3ac105911889d49d88a8a516150563e70e496e3463f90e": {
-    functionName: "linkTelegramFn_createServerFn_handler",
-    importer: () => import("./assets/dashboard-lN9MEgK3.js")
+    importer: () => import("./assets/payment-L1lzEXGG.js")
   },
   "a674a4b7e6b570e9ead43c412717189958e8e03b41ab710763411b5e1960f270": {
     functionName: "createCardPaymentFn_createServerFn_handler",
-    importer: () => import("./assets/payment-DRs0tY8w.js")
+    importer: () => import("./assets/payment-L1lzEXGG.js")
   },
   "a6b2b735ecfaa96e1a8706a78a2164a66e44f93d28f719781bbdda8ba3f902ae": {
     functionName: "deleteDeviceFn_createServerFn_handler",
-    importer: () => import("./assets/dashboard-lN9MEgK3.js")
+    importer: () => import("./assets/dashboard-BeapJXpG.js")
   },
   "dc53a6730c47ab72c4cc3a3683164d584a74cd2688784c5cf65e571c0c8fbf1a": {
     functionName: "buyDevicesWithBalanceFn_createServerFn_handler",
-    importer: () => import("./assets/payment-DRs0tY8w.js")
+    importer: () => import("./assets/payment-L1lzEXGG.js")
   },
   "e18bff70a16fc4542841e46b562fa67cd8c1ef8455738ee913280cc629bff424": {
     functionName: "loginFn_createServerFn_handler",
@@ -171,6 +171,10 @@ const manifest = {
   "ea22d673e568787a7f00470a2f366dff32a5e0d354247aa9e14685f5e577bebd": {
     functionName: "registerFn_createServerFn_handler",
     importer: () => import("./assets/auth-DH6-CUPZ.js")
+  },
+  "f08f427c149c5538b91ec1fd60a9cd8c07bcf0f0fd76511dd3e9e9194d576174": {
+    functionName: "googleCallbackFn_createServerFn_handler",
+    importer: () => import("./assets/oauth-CPOmjzwt.js")
   }
 };
 async function getServerFnById(id, access) {
@@ -1149,7 +1153,7 @@ var baseManifestPromise;
 var cachedFinalManifestPromise;
 async function loadEntries() {
   const [routerEntry, startEntry, pluginAdapters] = await Promise.all([
-    import("./assets/router-OtYyjvOl.js").then((n) => n.e),
+    import("./assets/router-DDxkyDS4.js").then((n) => n.e),
     import("./assets/start-HYkvq4Ni.js"),
     import("./assets/__23tanstack-start-plugin-adapters-Cwee5PKy.js")
   ]);

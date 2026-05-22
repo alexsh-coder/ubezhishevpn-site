@@ -33,11 +33,11 @@ function addDays(d, days) {
   r.setUTCDate(r.getUTCDate() + days);
   return r;
 }
-async function issueOrExtend(telegramId, days, tariff) {
+async function issueOrExtend(userId, days, tariff, telegramId = null) {
   const now = /* @__PURE__ */ new Date();
   const subsRes = await pool.query(
     "SELECT * FROM subscriptions WHERE user_id = $1 ORDER BY id DESC LIMIT 20",
-    [telegramId]
+    [userId]
   );
   const activeSub = subsRes.rows.find((r) => {
     try {
@@ -64,12 +64,15 @@ async function issueOrExtend(telegramId, days, tariff) {
   }
   const remnaUsername = makeRemnaUsername();
   const devices = activeSub?.devices ?? DEVICES_DEFAULT;
-  const userRes = await pool.query("SELECT username FROM users WHERE user_id = $1", [telegramId]);
-  const tgUsername = userRes.rows[0]?.username ?? "";
+  let tgUsername = "";
+  if (telegramId) {
+    const userRes = await pool.query("SELECT username FROM users WHERE user_id = $1", [telegramId]);
+    tgUsername = userRes.rows[0]?.username ?? "";
+  }
   const created = await createUser({
     username: remnaUsername,
     expireAt: newExp,
-    description: `Web tg=${telegramId} tariff=${tariff}`,
+    description: `Web user=${userId} tariff=${tariff}`,
     deviceLimit: devices,
     telegramId
   });
@@ -80,7 +83,7 @@ async function issueOrExtend(telegramId, days, tariff) {
     `INSERT INTO subscriptions (user_id, username, remna_uuid, sub_id, sub_url, created_at, expires_at, tariff, devices, remna_username)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`,
     [
-      telegramId,
+      userId,
       tgUsername,
       created.uuid,
       created.shortUuid ?? created.uuid.substring(0, 8),
@@ -143,11 +146,7 @@ async function createPayment(opts) {
 }
 const COOKIE = "auth_token";
 const TARIFFS = {
-  trial: {
-    days: 3,
-    priceRub: 0,
-    label: "Пробный · 3 дня · Бесплатно"
-  },
+  // trial: { days: 3, priceRub: 0, label: 'Пробный · 3 дня · Бесплатно' },
   m1: {
     days: 30,
     priceRub: 99,
@@ -174,6 +173,9 @@ async function getAccount() {
   const r = await pool.query("SELECT id, email, name, telegram_user_id FROM web_accounts WHERE id = $1", [payload.accountId]);
   return r.rows[0] ?? null;
 }
+function effectiveUserId(account) {
+  return account.telegram_user_id ?? String(account.id);
+}
 function fmtNow() {
   const d = /* @__PURE__ */ new Date();
   const p = (n) => String(n).padStart(2, "0");
@@ -188,11 +190,19 @@ const getTariffsFn = createServerFn({
   method: "GET"
 }).handler(getTariffsFn_createServerFn_handler, async () => {
   const account = await getAccount();
-  if (!account?.telegram_user_id) throw new Error("Не авторизован");
-  const userRow = await pool.query("SELECT trial_used, balance FROM users WHERE user_id = $1", [account.telegram_user_id]);
-  const user = userRow.rows[0];
-  const trialUsed = Boolean(user?.trial_used);
-  const balance = Number(user?.balance ?? 0);
+  if (!account) throw new Error("Не авторизован");
+  let trialUsed = false;
+  let balance = 0;
+  if (account.telegram_user_id) {
+    const userRow = await pool.query("SELECT trial_used, balance FROM users WHERE user_id = $1", [account.telegram_user_id]);
+    const user = userRow.rows[0];
+    trialUsed = Boolean(user?.trial_used);
+    balance = Number(user?.balance ?? 0);
+  } else {
+    const webUserId = String(account.id);
+    const trialCheck = await pool.query("SELECT id FROM subscriptions WHERE user_id = $1 AND tariff = 'trial'", [webUserId]);
+    trialUsed = trialCheck.rows.length > 0;
+  }
   return {
     tariffs: Object.entries(TARIFFS).map(([key, t]) => ({
       key,
@@ -213,12 +223,20 @@ const activateTrialFn = createServerFn({
   method: "POST"
 }).handler(activateTrialFn_createServerFn_handler, async () => {
   const account = await getAccount();
-  if (!account?.telegram_user_id) throw new Error("Не авторизован");
-  const userRow = await pool.query("SELECT trial_used FROM users WHERE user_id = $1", [account.telegram_user_id]);
-  if (userRow.rows[0]?.trial_used) throw new Error("Пробный период уже использован");
-  const result = await issueOrExtend(account.telegram_user_id, TARIFFS.trial.days, "trial");
+  if (!account) throw new Error("Не авторизован");
+  const userId = effectiveUserId(account);
+  if (account.telegram_user_id) {
+    const userRow = await pool.query("SELECT trial_used FROM users WHERE user_id = $1", [account.telegram_user_id]);
+    if (userRow.rows[0]?.trial_used) throw new Error("Пробный период уже использован");
+  } else {
+    const trialCheck = await pool.query("SELECT id FROM subscriptions WHERE user_id = $1 AND tariff = 'trial'", [userId]);
+    if (trialCheck.rows.length > 0) throw new Error("Пробный период уже использован");
+  }
+  const result = await issueOrExtend(userId, TARIFFS.trial.days, "trial", account.telegram_user_id ?? null);
   if (!result.ok) throw new Error("Не удалось создать подписку. Попробуйте позже.");
-  await pool.query("UPDATE users SET trial_used = 1 WHERE user_id = $1", [account.telegram_user_id]);
+  if (account.telegram_user_id) {
+    await pool.query("UPDATE users SET trial_used = 1 WHERE user_id = $1", [account.telegram_user_id]);
+  }
   return {
     subUrl: result.subUrl,
     expiresAt: result.expiresAt.toISOString()
@@ -237,7 +255,7 @@ const buyWithBalanceFn = createServerFn({
   data
 }) => {
   const account = await getAccount();
-  if (!account?.telegram_user_id) throw new Error("Не авторизован");
+  if (!account?.telegram_user_id) throw new Error("Баланс доступен только для привязанных аккаунтов");
   const t = TARIFFS[data.tariff];
   const balRow = await pool.query("SELECT balance FROM users WHERE user_id = $1", [account.telegram_user_id]);
   const balance = Number(balRow.rows[0]?.balance ?? 0);
@@ -246,7 +264,7 @@ const buyWithBalanceFn = createServerFn({
   if (deduct.rowCount === 0) throw new Error("Недостаточно средств на балансе");
   await pool.query(`INSERT INTO balance_tx (user_id, amount, kind, description, created_at)
        VALUES ($1, $2, 'spend', $3, $4)`, [account.telegram_user_id, -t.priceRub, `Покупка тарифа ${data.tariff} (веб)`, fmtNow()]);
-  const result = await issueOrExtend(account.telegram_user_id, t.days, data.tariff);
+  const result = await issueOrExtend(account.telegram_user_id, t.days, data.tariff, account.telegram_user_id);
   if (!result.ok) {
     await pool.query("UPDATE users SET balance = balance + $1 WHERE user_id = $2", [t.priceRub, account.telegram_user_id]);
     await pool.query(`INSERT INTO balance_tx (user_id, amount, kind, description, created_at)
@@ -271,12 +289,13 @@ const createCardPaymentFn = createServerFn({
   data
 }) => {
   const account = await getAccount();
-  if (!account?.telegram_user_id) throw new Error("Не авторизован");
+  if (!account) throw new Error("Не авторизован");
+  const userId = effectiveUserId(account);
   const t = TARIFFS[data.tariff];
-  const invoiceId = `web_${account.telegram_user_id}_${Date.now()}`;
+  const invoiceId = `web_${userId}_${Date.now()}`;
   const returnUrl = `${process.env.APP_URL ?? "http://localhost:3000"}/dashboard`;
   await pool.query(`INSERT INTO payments (invoice_id, user_id, amount, days, tariff, promo, status, created_at)
-       VALUES ($1, $2, $3, $4, $5, NULL, 'pending', $6)`, [invoiceId, account.telegram_user_id, t.priceRub, t.days, data.tariff, fmtNow()]);
+       VALUES ($1, $2, $3, $4, $5, NULL, 'pending', $6)`, [invoiceId, userId, t.priceRub, t.days, data.tariff, fmtNow()]);
   const yk = await createPayment({
     amountRub: t.priceRub,
     description: `УбежищеVPN · ${t.label}`,
@@ -299,12 +318,12 @@ const buyDevicesWithBalanceFn_createServerFn_handler = createServerRpc({
 const buyDevicesWithBalanceFn = createServerFn({
   method: "POST"
 }).inputValidator(z.object({
-  subId: z.number().int().positive()
+  subId: z.coerce.number().int().positive()
 })).handler(buyDevicesWithBalanceFn_createServerFn_handler, async ({
   data
 }) => {
   const account = await getAccount();
-  if (!account?.telegram_user_id) throw new Error("Не авторизован");
+  if (!account?.telegram_user_id) throw new Error("Баланс доступен только для привязанных аккаунтов");
   const balRow = await pool.query("SELECT balance FROM users WHERE user_id = $1", [account.telegram_user_id]);
   const balance = Number(balRow.rows[0]?.balance ?? 0);
   if (balance < DEVICES_PRICE_RUB) throw new Error("Недостаточно средств на балансе");
@@ -331,18 +350,20 @@ const createDevicesCardPaymentFn_createServerFn_handler = createServerRpc({
 const createDevicesCardPaymentFn = createServerFn({
   method: "POST"
 }).inputValidator(z.object({
-  subId: z.number().int().positive()
+  subId: z.coerce.number().int().positive()
 })).handler(createDevicesCardPaymentFn_createServerFn_handler, async ({
   data
 }) => {
   const account = await getAccount();
-  if (!account?.telegram_user_id) throw new Error("Не авторизован");
-  const subCheck = await pool.query("SELECT id FROM subscriptions WHERE id = $1 AND user_id = $2", [data.subId, account.telegram_user_id]);
+  if (!account) throw new Error("Не авторизован");
+  const userId = effectiveUserId(account);
+  const userIds = account.telegram_user_id ? [account.telegram_user_id, String(account.id)] : [String(account.id)];
+  const subCheck = await pool.query("SELECT id FROM subscriptions WHERE id = $1 AND user_id = ANY($2)", [data.subId, userIds]);
   if (subCheck.rows.length === 0) throw new Error("Подписка не найдена");
-  const invoiceId = `web_${account.telegram_user_id}_dev_${Date.now()}`;
+  const invoiceId = `web_${userId}_dev_${Date.now()}`;
   const returnUrl = `${process.env.APP_URL ?? "http://localhost:3000"}/dashboard`;
   await pool.query(`INSERT INTO payments (invoice_id, user_id, amount, days, tariff, promo, status, created_at)
-       VALUES ($1, $2, $3, 0, 'devices', NULL, 'pending', $4)`, [invoiceId, account.telegram_user_id, DEVICES_PRICE_RUB, fmtNow()]);
+       VALUES ($1, $2, $3, 0, 'devices', NULL, 'pending', $4)`, [invoiceId, userId, DEVICES_PRICE_RUB, fmtNow()]);
   const yk = await createPayment({
     amountRub: DEVICES_PRICE_RUB,
     description: `УбежищеVPN · +${DEVICES_STEP} устройства`,

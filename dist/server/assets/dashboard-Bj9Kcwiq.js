@@ -1,8 +1,8 @@
-import { jsx, jsxs, Fragment } from "react/jsx-runtime";
+import { jsx, jsxs } from "react/jsx-runtime";
 import { useNavigate, useRouter, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { LogOut, User, Send, Wallet, MessageCircle, ExternalLink, Check, Copy, CreditCard, ShieldCheck, Smartphone, ChevronUp, ChevronDown, Trash2, Plus } from "lucide-react";
-import { c as createSsrRpc, R as Route, a as logoutFn, b as linkTelegramFn, d as deleteDeviceFn, g as getDevicesFn } from "./router-OtYyjvOl.js";
+import { LogOut, User, Send, Bot, ExternalLink, MessageCircle, Check, Copy, CreditCard, ShieldCheck, Smartphone, ChevronUp, ChevronDown, Trash2, Plus } from "lucide-react";
+import { c as createSsrRpc, R as Route, a as logoutFn, d as deleteDeviceFn, b as getDevicesFn } from "./router-DDxkyDS4.js";
 import { z } from "zod";
 import { c as createServerFn } from "../server.js";
 import "node:async_hooks";
@@ -32,12 +32,12 @@ const createCardPaymentFn = createServerFn({
 const buyDevicesWithBalanceFn = createServerFn({
   method: "POST"
 }).inputValidator(z.object({
-  subId: z.number().int().positive()
+  subId: z.coerce.number().int().positive()
 })).handler(createSsrRpc("dc53a6730c47ab72c4cc3a3683164d584a74cd2688784c5cf65e571c0c8fbf1a"));
 const createDevicesCardPaymentFn = createServerFn({
   method: "POST"
 }).inputValidator(z.object({
-  subId: z.number().int().positive()
+  subId: z.coerce.number().int().positive()
 })).handler(createSsrRpc("106d2db918fd7a0e558d1ee9877ca8987d3cd98bd97ed55dcb71e0108b079c4b"));
 function formatDate(s) {
   return (/* @__PURE__ */ new Date(s.replace(" ", "T") + ":00Z")).toLocaleDateString("ru-RU", {
@@ -410,59 +410,6 @@ function BuySection({
   }
   return null;
 }
-function LinkTelegramCard({
-  onLinked
-}) {
-  const [telegramId, setTelegramId] = useState("");
-  const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(false);
-  async function handleLink(e) {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
-    try {
-      await linkTelegramFn({
-        data: {
-          telegramId
-        }
-      });
-      await onLinked();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Ошибка привязки");
-    } finally {
-      setLoading(false);
-    }
-  }
-  return /* @__PURE__ */ jsxs("div", { className: "rounded-xl border bg-card p-5 space-y-4", children: [
-    /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2", children: [
-      /* @__PURE__ */ jsx(Send, { className: "w-5 h-5 text-[var(--telegram,#2AABEE)]" }),
-      /* @__PURE__ */ jsx("h2", { className: "font-semibold", children: "Привязать Telegram аккаунт" })
-    ] }),
-    /* @__PURE__ */ jsxs("p", { className: "text-sm text-muted-foreground", children: [
-      "Привяжите ваш Telegram, чтобы видеть подписки из бота",
-      " ",
-      /* @__PURE__ */ jsxs("a", { href: "https://t.me/vpnasylum_bot", target: "_blank", rel: "noreferrer", className: "text-primary hover:underline inline-flex items-center gap-0.5", children: [
-        "@vpnasylum_bot",
-        /* @__PURE__ */ jsx(ExternalLink, { className: "w-3 h-3" })
-      ] }),
-      "."
-    ] }),
-    /* @__PURE__ */ jsxs("div", { className: "text-sm text-muted-foreground bg-surface rounded-lg p-3 space-y-1", children: [
-      /* @__PURE__ */ jsx("p", { className: "font-medium text-foreground", children: "Как узнать свой Telegram ID:" }),
-      /* @__PURE__ */ jsxs("p", { children: [
-        "1. Откройте Telegram и напишите боту ",
-        /* @__PURE__ */ jsx("span", { className: "font-mono", children: "@userinfobot" })
-      ] }),
-      /* @__PURE__ */ jsx("p", { children: "2. Отправьте любое сообщение" }),
-      /* @__PURE__ */ jsx("p", { children: "3. Скопируйте число из поля «Id»" })
-    ] }),
-    /* @__PURE__ */ jsxs("form", { onSubmit: handleLink, className: "flex gap-2", children: [
-      /* @__PURE__ */ jsx("input", { type: "text", inputMode: "numeric", pattern: "\\d+", placeholder: "123456789", value: telegramId, onChange: (e) => setTelegramId(e.target.value.replace(/\D/g, "")), className: "flex-1 border rounded-lg px-3 py-2 bg-surface text-sm outline-none focus:ring-2 focus:ring-primary/50", required: true }),
-      /* @__PURE__ */ jsx("button", { type: "submit", disabled: loading || !telegramId, className: "px-4 py-2 rounded-xl font-semibold text-white vpn-primary-button text-sm transition-all hover:brightness-110 disabled:opacity-60 disabled:pointer-events-none", children: loading ? "..." : "Привязать" })
-    ] }),
-    error && /* @__PURE__ */ jsx("p", { className: "text-sm text-destructive bg-destructive/10 rounded-lg px-3 py-2", children: error })
-  ] });
-}
 function DashboardPage() {
   const {
     account,
@@ -477,9 +424,6 @@ function DashboardPage() {
     await navigate({
       to: "/"
     });
-  }
-  async function handleLinked() {
-    await router.invalidate();
   }
   async function handlePurchased() {
     await router.invalidate();
@@ -503,44 +447,40 @@ function DashboardPage() {
       ] }),
       /* @__PURE__ */ jsx("p", { className: "font-semibold text-lg", children: account.name ?? account.email }),
       account.name && /* @__PURE__ */ jsx("p", { className: "text-sm text-muted-foreground", children: account.email }),
-      account.telegram_user_id && /* @__PURE__ */ jsxs("p", { className: "text-sm text-muted-foreground flex items-center gap-1.5 mt-1", children: [
+      account.telegram_user_id ? /* @__PURE__ */ jsxs("p", { className: "text-sm text-muted-foreground flex items-center gap-1.5 mt-1", children: [
         /* @__PURE__ */ jsx(Send, { className: "w-3.5 h-3.5" }),
         "Telegram привязан (ID: ",
         account.telegram_user_id,
         ")"
-      ] })
-    ] }),
-    account.telegram_user_id && /* @__PURE__ */ jsxs("div", { className: "rounded-xl border bg-card p-5 flex items-center gap-3", children: [
-      /* @__PURE__ */ jsx(Wallet, { className: "w-5 h-5 text-primary" }),
-      /* @__PURE__ */ jsxs("div", { children: [
-        /* @__PURE__ */ jsx("p", { className: "text-sm text-muted-foreground", children: "Баланс" }),
-        /* @__PURE__ */ jsxs("p", { className: "font-semibold text-lg", children: [
-          Number(balance).toFixed(2),
-          " ₽"
-        ] })
-      ] })
-    ] }),
-    !account.telegram_user_id ? /* @__PURE__ */ jsx(LinkTelegramCard, { onLinked: handleLinked }) : /* @__PURE__ */ jsxs(Fragment, { children: [
-      subscriptions.length > 0 && /* @__PURE__ */ jsxs("div", { className: "space-y-3", children: [
-        /* @__PURE__ */ jsx("h2", { className: "font-semibold", children: "Подписки" }),
-        subscriptions.map((sub) => /* @__PURE__ */ jsx(SubCard, { sub, onChanged: handlePurchased }, sub.id))
-      ] }),
-      /* @__PURE__ */ jsx(BuySection, { balance: Number(balance), hasActiveSub, onPurchased: handlePurchased }),
-      subscriptions.length === 0 && /* @__PURE__ */ jsxs("p", { className: "text-sm text-muted-foreground text-center", children: [
-        "Нет подписок. Используйте кнопку выше или оформите в",
+      ] }) : /* @__PURE__ */ jsxs("p", { className: "text-sm text-muted-foreground flex items-center gap-1.5 mt-1", children: [
+        /* @__PURE__ */ jsx(Bot, { className: "w-3.5 h-3.5" }),
+        "Для синхронизации с ботом перейдите в профиль в",
         " ",
-        /* @__PURE__ */ jsx("a", { href: "https://t.me/vpnasylum_bot", target: "_blank", rel: "noreferrer", className: "text-primary hover:underline", children: "@vpnasylum_bot" }),
-        "."
-      ] }),
-      /* @__PURE__ */ jsxs("div", { className: "rounded-xl border bg-card p-4 flex items-center justify-between", children: [
-        /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2 text-sm", children: [
-          /* @__PURE__ */ jsx(MessageCircle, { className: "w-4 h-4 text-primary" }),
-          /* @__PURE__ */ jsx("span", { children: "Вопросы? Мы поможем" })
-        ] }),
-        /* @__PURE__ */ jsxs("a", { href: SUPPORT_URL, target: "_blank", rel: "noreferrer", className: "flex items-center gap-1.5 text-sm font-medium text-primary hover:underline", children: [
-          "Написать",
+        /* @__PURE__ */ jsxs("a", { href: "https://t.me/vpnasylum_bot", target: "_blank", rel: "noreferrer", className: "text-primary hover:underline inline-flex items-center gap-0.5", children: [
+          "@vpnasylum_bot",
           /* @__PURE__ */ jsx(ExternalLink, { className: "w-3 h-3" })
         ] })
+      ] })
+    ] }),
+    subscriptions.length > 0 && /* @__PURE__ */ jsxs("div", { className: "space-y-3", children: [
+      /* @__PURE__ */ jsx("h2", { className: "font-semibold", children: "Подписки" }),
+      subscriptions.map((sub) => /* @__PURE__ */ jsx(SubCard, { sub, onChanged: handlePurchased }, sub.id))
+    ] }),
+    /* @__PURE__ */ jsx(BuySection, { balance: Number(balance), hasActiveSub, onPurchased: handlePurchased }),
+    subscriptions.length === 0 && /* @__PURE__ */ jsxs("p", { className: "text-sm text-muted-foreground text-center", children: [
+      "Нет активных подписок. Купите выше или оформите через",
+      " ",
+      /* @__PURE__ */ jsx("a", { href: "https://t.me/vpnasylum_bot", target: "_blank", rel: "noreferrer", className: "text-primary hover:underline", children: "@vpnasylum_bot" }),
+      "."
+    ] }),
+    /* @__PURE__ */ jsxs("div", { className: "rounded-xl border bg-card p-4 flex items-center justify-between", children: [
+      /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2 text-sm", children: [
+        /* @__PURE__ */ jsx(MessageCircle, { className: "w-4 h-4 text-primary" }),
+        /* @__PURE__ */ jsx("span", { children: "Вопросы? Мы поможем" })
+      ] }),
+      /* @__PURE__ */ jsxs("a", { href: SUPPORT_URL, target: "_blank", rel: "noreferrer", className: "flex items-center gap-1.5 text-sm font-medium text-primary hover:underline", children: [
+        "Написать",
+        /* @__PURE__ */ jsx(ExternalLink, { className: "w-3 h-3" })
       ] })
     ] })
   ] }) });

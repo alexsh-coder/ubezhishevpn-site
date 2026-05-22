@@ -38,8 +38,8 @@ const servers = [{
   name: "Германия",
   desc: "Оптимальный баланс скорости и надёжности."
 }, {
-  code: "nl",
-  name: "Нидерланды",
+  code: "us",
+  name: "США",
   desc: "Максимальная свобода доступа и обход ограничений."
 }];
 function Reveal({
@@ -69,7 +69,7 @@ function Index() {
             /* @__PURE__ */ jsx("span", { className: "text-primary", children: "VPN" })
           ] })
         ] }),
-        /* @__PURE__ */ jsxs("div", { className: "hidden md:flex items-center gap-8 text-sm text-muted-foreground", children: [
+        /* @__PURE__ */ jsxs("div", { className: "flex md:flex items-center gap-3 md:gap-8 text-base text-muted-foreground", children: [
           /* @__PURE__ */ jsx(Link, { to: "/login", className: "text-muted-foreground transition-colors hover:text-primary", children: "Вход" }),
           /* @__PURE__ */ jsx("span", { className: "w-1 h-1 rounded-full bg-primary" }),
           /* @__PURE__ */ jsx(Link, { to: "/register", className: "text-muted-foreground transition-colors hover:text-primary", children: "Регистрация" })
@@ -176,23 +176,36 @@ function Index() {
       ] }) }, num)) }),
       /* @__PURE__ */ jsx("p", { className: "text-center text-muted-foreground mt-10", children: "Без сложной настройки и технических знаний." })
     ] }),
-    /* @__PURE__ */ jsx(Section, { title: "Тарифы", children: /* @__PURE__ */ jsx("div", { className: "grid md:grid-cols-3 gap-5", children: [{
-      name: "Пробный",
-      desc1: "3 дня доступа",
-      desc2: "с ограничением по трафику",
-      price: "0 ₽"
-    }, {
-      name: "1 месяц",
-      desc1: "30 дней",
-      desc2: "доступ ко всем серверам",
-      price: "99 ₽",
-      popular: true
-    }, {
-      name: "3 месяца",
-      desc1: "90 дней",
-      desc2: "доступ ко всем серверам",
-      price: "269 ₽"
-    }].map((p, i) => /* @__PURE__ */ jsx(Reveal, { delay: i * 120, children: /* @__PURE__ */ jsx(PriceCard, { ...p }) }, p.name)) }) }),
+    /* @__PURE__ */ jsxs(Section, { title: "Тарифы", children: [
+      /* @__PURE__ */ jsx("div", { className: "grid md:grid-cols-3 gap-5", children: [
+        // { name: "Пробный", desc1: "3 дня доступа", desc2: "с ограничением по трафику", price: "0 ₽" },
+        {
+          name: "1 месяц",
+          desc1: "30 дней",
+          desc2: "доступ ко всем серверам",
+          price: "99 ₽"
+        },
+        {
+          name: "🔥 3 месяца",
+          desc1: "90 дней",
+          desc2: "доступ ко всем серверам",
+          price: "269 ₽",
+          profitable: true,
+          discount: "(-10%)"
+        },
+        {
+          name: "12 месяцев",
+          desc1: "365 дней",
+          desc2: "доступ ко всем серверам",
+          price: "899 ₽",
+          discount: "(-25%)"
+        }
+      ].map((p, i) => /* @__PURE__ */ jsx(Reveal, { delay: i * 120, children: /* @__PURE__ */ jsx(PriceCard, { ...p }) }, p.name)) }),
+      /* @__PURE__ */ jsxs("p", { className: "text-center text-muted-foreground mt-1 translate-y-3", children: [
+        "Бесплатный доступ можно приобрести в боте:",
+        /* @__PURE__ */ jsx("a", { href: "https://t.me/vpnasylum_bot", target: "_blank", rel: "noreferrer", className: "text-primary hover:underline", children: "@vpnasylum_bot" })
+      ] })
+    ] }),
     /* @__PURE__ */ jsx(Section, { title: "Преимущества", bare: true, children: /* @__PURE__ */ jsx("div", { className: "grid grid-cols-2 md:grid-cols-6 gap-4", children: [{
       icon: Lock,
       text: "Надежная защита"
@@ -279,21 +292,25 @@ function PriceCard({
   desc1,
   desc2,
   price,
-  popular
+  profitable,
+  discount
 }) {
   return /* @__PURE__ */ jsxs("div", { className: "relative rounded-2xl border p-6 flex flex-col items-center text-center", style: {
-    background: popular ? "var(--surface-elevated)" : "var(--surface)",
-    borderColor: popular ? "oklch(0.62 0.22 280 / 0.6)" : void 0,
-    boxShadow: popular ? "var(--shadow-elevated)" : "var(--shadow-card)"
+    background: profitable ? "var(--surface-elevated)" : "var(--surface)",
+    borderColor: profitable ? "oklch(0.62 0.22 280 / 0.6)" : void 0,
+    boxShadow: profitable ? "var(--shadow-elevated)" : "var(--shadow-card)"
   }, children: [
-    popular && /* @__PURE__ */ jsx("div", { className: "absolute -top-3 px-4 py-1 rounded-full text-xs font-semibold text-primary-foreground tracking-wider", style: {
+    profitable && /* @__PURE__ */ jsx("div", { className: "absolute -top-3 px-4 py-1 rounded-full text-xs font-semibold text-primary-foreground tracking-wider", style: {
       background: "var(--gradient-primary)"
-    }, children: "ПОПУЛЯРНЫЙ" }),
+    }, children: "ВЫГОДНО" }),
     /* @__PURE__ */ jsx("h3", { className: "font-semibold text-lg mt-2", children: name }),
     /* @__PURE__ */ jsx("p", { className: "mt-3 text-sm text-muted-foreground", children: desc1 }),
     /* @__PURE__ */ jsx("p", { className: "text-sm text-muted-foreground", children: desc2 }),
-    /* @__PURE__ */ jsx("div", { className: "my-5 text-3xl font-bold", children: price }),
-    /* @__PURE__ */ jsx("a", { href: TG_URL, className: "w-full px-4 py-3 rounded-xl text-sm font-semibold transition hover:-translate-y-0.5 ", style: popular ? {
+    /* @__PURE__ */ jsxs("div", { className: "my-5 relative text-center", children: [
+      /* @__PURE__ */ jsx("span", { className: "text-3xl font-bold", children: price }),
+      discount && /* @__PURE__ */ jsx("span", { className: "absolute translate-y-4 ml-2 text-sm font-normal opacity-70", children: discount })
+    ] }),
+    /* @__PURE__ */ jsx("a", { href: TG_URL, className: "w-full px-4 py-3 rounded-xl text-sm font-semibold transition hover:-translate-y-0.5 ", style: profitable ? {
       background: "var(--gradient-cta)",
       color: "var(--primary-foreground)"
     } : {

@@ -2,7 +2,7 @@ import { jsx, jsxs } from "react/jsx-runtime";
 import { createRootRoute, Link, Outlet, HeadContent, Scripts, createFileRoute, lazyRouteComponent, redirect, createRouter, useRouter } from "@tanstack/react-router";
 import { T as TSS_SERVER_FUNCTION, g as getServerFnById, c as createServerFn } from "../server.js";
 import { z } from "zod";
-const appCss = "/assets/styles-CbsMT2FH.css";
+const appCss = "/assets/styles-Chk9Djio.css";
 var createSsrRpc = (functionId) => {
   const url = "/_serverFn/" + functionId;
   const serverFnMeta = { id: functionId };
@@ -49,7 +49,7 @@ function NotFoundComponent() {
     ) })
   ] }) });
 }
-const Route$5 = createRootRoute({
+const Route$7 = createRootRoute({
   beforeLoad: async () => {
     try {
       const user = await getMeFn();
@@ -94,40 +94,39 @@ function RootShell({ children }) {
 function RootComponent() {
   return /* @__PURE__ */ jsx(Outlet, {});
 }
-const $$splitComponentImporter$4 = () => import("./test-CFML2TPk.js");
-const Route$4 = createFileRoute("/test")({
+const $$splitComponentImporter$6 = () => import("./test-CFML2TPk.js");
+const Route$6 = createFileRoute("/test")({
+  component: lazyRouteComponent($$splitComponentImporter$6, "component")
+});
+const $$splitComponentImporter$5 = () => import("./register-Bpm1wJfG.js");
+const Route$5 = createFileRoute("/register")({
+  beforeLoad: ({
+    context
+  }) => {
+    if (context.user) throw redirect({
+      to: "/dashboard"
+    });
+  },
+  component: lazyRouteComponent($$splitComponentImporter$5, "component")
+});
+const $$splitComponentImporter$4 = () => import("./login-CeWDwBGl.js");
+const Route$4 = createFileRoute("/login")({
+  beforeLoad: ({
+    context
+  }) => {
+    if (context.user) throw redirect({
+      to: "/dashboard"
+    });
+  },
   component: lazyRouteComponent($$splitComponentImporter$4, "component")
 });
-const $$splitComponentImporter$3 = () => import("./register-3iPgq0dv.js");
-const Route$3 = createFileRoute("/register")({
-  beforeLoad: ({
-    context
-  }) => {
-    if (context.user) throw redirect({
-      to: "/dashboard"
-    });
-  },
+const $$splitComponentImporter$3 = () => import("./forgot-password-DAkMYhW8.js");
+const Route$3 = createFileRoute("/forgot-password")({
   component: lazyRouteComponent($$splitComponentImporter$3, "component")
-});
-const $$splitComponentImporter$2 = () => import("./login-DRunw7f6.js");
-const Route$2 = createFileRoute("/login")({
-  beforeLoad: ({
-    context
-  }) => {
-    if (context.user) throw redirect({
-      to: "/dashboard"
-    });
-  },
-  component: lazyRouteComponent($$splitComponentImporter$2, "component")
 });
 const getDashboardDataFn = createServerFn({
   method: "GET"
 }).handler(createSsrRpc("5d3a6d8575218593933fd24bcfb68bcd6c1e482b609add67819d0e855cc5018b"));
-const linkTelegramFn = createServerFn({
-  method: "POST"
-}).inputValidator(z.object({
-  telegramId: z.string().regex(/^\d+$/, "Введите числовой ID")
-})).handler(createSsrRpc("a01ca2150fb3a7110a3ac105911889d49d88a8a516150563e70e496e3463f90e"));
 const getDevicesFn = createServerFn({
   method: "GET"
 }).inputValidator(z.object({
@@ -139,8 +138,8 @@ const deleteDeviceFn = createServerFn({
   remnaUuid: z.string().min(1),
   hwid: z.string().min(1)
 })).handler(createSsrRpc("a6b2b735ecfaa96e1a8706a78a2164a66e44f93d28f719781bbdda8ba3f902ae"));
-const $$splitComponentImporter$1 = () => import("./dashboard-BCaeKPKR.js");
-const Route$1 = createFileRoute("/dashboard")({
+const $$splitComponentImporter$2 = () => import("./dashboard-Bj9Kcwiq.js");
+const Route$2 = createFileRoute("/dashboard")({
   beforeLoad: ({
     context
   }) => {
@@ -149,45 +148,99 @@ const Route$1 = createFileRoute("/dashboard")({
     });
   },
   loader: () => getDashboardDataFn(),
+  component: lazyRouteComponent($$splitComponentImporter$2, "component")
+});
+const $$splitComponentImporter$1 = () => import("./index-Dn6jU6fk.js");
+const Route$1 = createFileRoute("/")({
   component: lazyRouteComponent($$splitComponentImporter$1, "component")
 });
-const $$splitComponentImporter = () => import("./index-CYtAzJRo.js");
-const Route = createFileRoute("/")({
+const getGoogleAuthUrlFn = createServerFn({
+  method: "GET"
+}).handler(createSsrRpc("16a8ddf6bd9d4b86f04024b511f2a74f467262c057a73ea6065c5d63b321a141"));
+const googleCallbackFn = createServerFn({
+  method: "GET"
+}).inputValidator(z.object({
+  code: z.string(),
+  state: z.string()
+})).handler(createSsrRpc("f08f427c149c5538b91ec1fd60a9cd8c07bcf0f0fd76511dd3e9e9194d576174"));
+const $$splitComponentImporter = () => import("./callback-BTU5dmpx.js");
+const Route = createFileRoute("/auth/google/callback")({
+  validateSearch: z.object({
+    code: z.string().optional(),
+    state: z.string().optional(),
+    error: z.string().optional()
+  }),
+  beforeLoad: async ({
+    search
+  }) => {
+    if (search.error || !search.code || !search.state) {
+      throw redirect({
+        to: "/login"
+      });
+    }
+    try {
+      await googleCallbackFn({
+        data: {
+          code: search.code,
+          state: search.state
+        }
+      });
+    } catch {
+      throw redirect({
+        to: "/login"
+      });
+    }
+    throw redirect({
+      to: "/dashboard"
+    });
+  },
   component: lazyRouteComponent($$splitComponentImporter, "component")
 });
-const TestRoute = Route$4.update({
+const TestRoute = Route$6.update({
   id: "/test",
   path: "/test",
-  getParentRoute: () => Route$5
+  getParentRoute: () => Route$7
 });
-const RegisterRoute = Route$3.update({
+const RegisterRoute = Route$5.update({
   id: "/register",
   path: "/register",
-  getParentRoute: () => Route$5
+  getParentRoute: () => Route$7
 });
-const LoginRoute = Route$2.update({
+const LoginRoute = Route$4.update({
   id: "/login",
   path: "/login",
-  getParentRoute: () => Route$5
+  getParentRoute: () => Route$7
 });
-const DashboardRoute = Route$1.update({
+const ForgotPasswordRoute = Route$3.update({
+  id: "/forgot-password",
+  path: "/forgot-password",
+  getParentRoute: () => Route$7
+});
+const DashboardRoute = Route$2.update({
   id: "/dashboard",
   path: "/dashboard",
-  getParentRoute: () => Route$5
+  getParentRoute: () => Route$7
 });
-const IndexRoute = Route.update({
+const IndexRoute = Route$1.update({
   id: "/",
   path: "/",
-  getParentRoute: () => Route$5
+  getParentRoute: () => Route$7
+});
+const AuthGoogleCallbackRoute = Route.update({
+  id: "/auth/google/callback",
+  path: "/auth/google/callback",
+  getParentRoute: () => Route$7
 });
 const rootRouteChildren = {
   IndexRoute,
   DashboardRoute,
+  ForgotPasswordRoute,
   LoginRoute,
   RegisterRoute,
-  TestRoute
+  TestRoute,
+  AuthGoogleCallbackRoute
 };
-const routeTree = Route$5._addFileChildren(rootRouteChildren)._addFileTypes();
+const routeTree = Route$7._addFileChildren(rootRouteChildren)._addFileTypes();
 function DefaultErrorComponent({ error, reset }) {
   const router2 = useRouter();
   return /* @__PURE__ */ jsx("div", { className: "flex min-h-screen items-center justify-center bg-background px-4", children: /* @__PURE__ */ jsxs("div", { className: "max-w-md text-center", children: [
@@ -251,13 +304,13 @@ const router = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProper
   getRouter
 }, Symbol.toStringTag, { value: "Module" }));
 export {
-  Route$1 as R,
+  Route$2 as R,
   logoutFn as a,
-  linkTelegramFn as b,
+  getDevicesFn as b,
   createSsrRpc as c,
   deleteDeviceFn as d,
   router as e,
-  getDevicesFn as g,
+  getGoogleAuthUrlFn as g,
   loginFn as l,
   registerFn as r
 };
