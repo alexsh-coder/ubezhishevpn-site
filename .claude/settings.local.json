@@ -7,7 +7,8 @@
       "PowerShell(Get-ChildItem \"D:\\\\_Projects\\\\Websites\\\\Ubezhishe\\\\node_modules\\\\@tanstack\" -Name | Where-Object { $_ -match \"start|router\" })",
       "Bash(npx tsc *)",
       "Bash(Get-Content *)",
-      "PowerShell(Get-Content *)"
+      "PowerShell(Get-Content *)",
+      "Bash(bun add *)"
     ]
   }
 }

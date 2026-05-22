@@ -1,8 +1,10 @@
 import { createServerFn } from '@tanstack/react-start'
 import { getCookie, setCookie, deleteCookie } from '@tanstack/react-start/server'
 import { z } from 'zod'
+import { randomBytes } from 'node:crypto'
 import pool from '@/lib/db'
 import { hashPassword, verifyPassword, signToken, verifyToken } from '@/lib/auth'
+import { sendPasswordResetEmail } from '@/lib/email'
 
 const COOKIE = 'auth_token'
 const COOKIE_OPTS = {
@@ -83,6 +85,63 @@ export const logoutFn = createServerFn({ method: 'POST' }).handler(async () => {
   deleteCookie(COOKIE, { path: '/' })
   return { ok: true }
 })
+
+export const requestPasswordResetFn = createServerFn({ method: 'POST' })
+  .inputValidator(z.object({ email: z.string().email('Неверный email') }))
+  .handler(async ({ data }) => {
+    const result = await pool.query('SELECT id, email FROM web_accounts WHERE email = $1', [
+      data.email.toLowerCase(),
+    ])
+    // Always return success to not leak whether email is registered
+    if (result.rows.length === 0) return { ok: true }
+
+    const account = result.rows[0]
+    const token = randomBytes(32).toString('hex')
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000) // 1 hour
+
+    await pool.query(
+      'INSERT INTO password_reset_tokens (account_id, token, expires_at) VALUES ($1, $2, $3)',
+      [account.id, token, expiresAt]
+    )
+
+    const appUrl = process.env.APP_URL ?? 'http://localhost:3000'
+    const origin = new URL(appUrl).origin
+    const resetUrl = `${origin}/reset-password?token=${token}`
+    await sendPasswordResetEmail(account.email, resetUrl)
+
+    return { ok: true }
+  })
+
+export const resetPasswordFn = createServerFn({ method: 'POST' })
+  .inputValidator(
+    z.object({
+      token: z.string().min(1),
+      password: z.string().min(6, 'Минимум 6 символов'),
+    })
+  )
+  .handler(async ({ data }) => {
+    const result = await pool.query(
+      `SELECT t.id, t.account_id, t.expires_at, t.used
+       FROM password_reset_tokens t
+       WHERE t.token = $1`,
+      [data.token]
+    )
+
+    if (result.rows.length === 0) throw new Error('Ссылка недействительна')
+
+    const row = result.rows[0]
+    if (row.used) throw new Error('Эта ссылка уже была использована')
+    if (new Date(row.expires_at) < new Date()) throw new Error('Ссылка устарела. Запросите новую.')
+
+    const passwordHash = await hashPassword(data.password)
+    await pool.query('UPDATE web_accounts SET password_hash = $1 WHERE id = $2', [
+      passwordHash,
+      row.account_id,
+    ])
+    await pool.query('UPDATE password_reset_tokens SET used = TRUE WHERE id = $1', [row.id])
+
+    return { ok: true }
+  })
 
 export const getMeFn = createServerFn({ method: 'GET' }).handler(
   async (): Promise<WebAccount | null> => {
